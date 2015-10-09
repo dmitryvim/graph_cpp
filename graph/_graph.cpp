@@ -1,29 +1,29 @@
 //
-//  graph.cpp
+//  _graph.cpp
 //  graph
 //
 //  Created by Dmitry Mikhaylovich on 09.10.15.
 //  Copyright © 2015 Dmitry Mikhaylovich. All rights reserved.
 //
 
-#include "graph.hpp"
+#include "_graph.hpp"
 
 
 
-void graph::newDirectedEdge (Vertex* left, Vertex* right, weight_t weight) {
+void Graph::newDirectedEdge (Vertex* left, Vertex* right, weight_t weight) {
     left->edges.push_back(std::make_pair(right, weight));
 };
 
 
 
-void graph::newEdge (Vertex* left, Vertex* right, weight_t weight) {
+void Graph::newEdge (Vertex* left, Vertex* right, weight_t weight) {
     newDirectedEdge(left, right, weight);
     if (!directed) {
         newDirectedEdge(right, left, weight);
     }
 };
 
-void graph::deleteDirectedEdge (Vertex* left, Vertex* right) {
+void Graph::deleteDirectedEdge (Vertex* left, Vertex* right) {
     for (__EdgeIterator E = left->edges.begin(); E != left->edges.end(); ++E) {
         if (E->first == right) {
             left->edges.erase(E);
@@ -32,27 +32,27 @@ void graph::deleteDirectedEdge (Vertex* left, Vertex* right) {
 };
 
 
-void graph::deleteEdge (Vertex* left, Vertex* right) {
+void Graph::deleteEdge (Vertex* left, Vertex* right) {
     deleteDirectedEdge(left, right);
     if (!directed) {
         deleteDirectedEdge(right, left);
     }
 };
 
-void graph::deleteOutway (Vertex* vertex) {
+void Graph::deleteOutway (Vertex* vertex) {
     vertex->edges.clear();
 };
 
 
-void graph::deleteInway (Vertex* vertex) {
-    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+void Graph::deleteInway (Vertex* vertex) {
+    for (__VertexIterator V = vertexes->begin(); V != vertexes->end(); ++V) {
         deleteDirectedEdge(&(*V), vertex);
     }
 };
 
 
 
-graph::weight_t** graph::newMatrix () {
+Graph::weight_t** Graph::newMatrix () {
     size_t size = vertexesCount();
     weight_t** matrix = new weight_t*[size];
     for (int i = 0; i < size; ++i) {
@@ -67,29 +67,29 @@ graph::weight_t** graph::newMatrix () {
 
 
 
-graph::graph (bool _directed, bool _weighted): directed(_directed), weighted(_weighted) {};
+Graph::Graph (bool _directed, bool _weighted): directed(_directed), weighted(_weighted) {};
 
 
 
-graph::graph (size_t size, bool _directed, bool _weighted): directed(_directed), weighted(_weighted) {
+Graph::Graph (size_t size, bool _directed, bool _weighted): directed(_directed), weighted(_weighted) {
     resize(size);
 };
 
-graph::~graph () {
-    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+Graph::~Graph () {
+    for (__VertexIterator V = vertexes->begin(); V != vertexes->end(); ++V) {
         V->edges.clear();
     }
-    vertexes.clear();
+    vertexes->clear();
 };
 
-size_t graph::vertexesCount () {
-    return vertexes.size();
+size_t Graph::vertexesCount () {
+    return vertexes->size();
 };
 
 
-size_t graph::edgesCount () {
+size_t Graph::edgesCount () {
     size_t count = 0;
-    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+    for (__VertexIterator V = vertexes->begin(); V != vertexes->end(); ++V) {
         count += V->edges.size();
     }
     return count;
@@ -97,35 +97,37 @@ size_t graph::edgesCount () {
 
 
 
-void graph::resize (size_t size) {
-    vertexes.resize(size);
+void Graph::resize (size_t size) {
+    vertexes->resize(size);
     for (int i = 0; i < size; ++i) {
-        vertexes[i].data = i;
+        (*vertexes)[i].data = i;
     }
 };
 
 
-void graph::newVertex () {
-    int index = (int)vertexes.size();
-    vertexes.push_back(Vertex(index));
+void Graph::newVertex () {
+    int index = (int)vertexes->size();
+    Vertex V;
+    V.data = index;
+    vertexes->push_back(V);
 };
 
-void graph::newEdge (int left, int right, weight_t weight) {
-    newEdge(&vertexes[left], &vertexes[right]);
+void Graph::newEdge (int left, int right, weight_t weight) {
+    newEdge(&(*vertexes)[left], &(*vertexes)[right]);
 };
 
-void graph::deleteVertex (int index) {
-    Vertex* vertex = &vertexes[index];
+void Graph::deleteVertex (int index) {
+    Vertex* vertex = &(*vertexes)[index];
     deleteInway(vertex);
     deleteOutway(vertex);
-    vertexes.erase(vertexes.begin() + index);
+    vertexes->erase(vertexes->begin() + index);
 };
 
-void graph::deleteEdge (int left, int right) {
-    deleteEdge(&vertexes[left], &vertexes[right]);
+void Graph::deleteEdge (int left, int right) {
+    deleteEdge(&(*vertexes)[left], &(*vertexes)[right]);
 };
 
-void graph::asign (weight_t** matrix, size_t size) {
+void Graph::asign (weight_t** matrix, size_t size) {
     resize(size);
     for (int x = 0; x < size; x++) {
         for (int y = 0; y < size; y++) {
@@ -136,7 +138,7 @@ void graph::asign (weight_t** matrix, size_t size) {
     }
 };
 
-void graph::readFromFileAsMatrix (std::string filename) {
+void Graph::readFromFileAsMatrix (std::string filename) {
     std::ifstream fin(filename);
     size_t size;
     fin >> size;
@@ -160,7 +162,7 @@ void graph::readFromFileAsMatrix (std::string filename) {
     fin.close();
 };
 
-void graph::readFromFileAsEdgeList (std::string filename) {
+void Graph::readFromFileAsEdgeList (std::string filename) {
     std::ifstream fin(filename);
     size_t size;
     fin >> size;
@@ -175,8 +177,8 @@ void graph::readFromFileAsEdgeList (std::string filename) {
     fin.close();
 };
 
-void graph::print () {
-    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+void Graph::print () {
+    for (__VertexIterator V = vertexes->begin(); V != vertexes->end(); ++V) {
         std::cout << V->data;
         for (__EdgeIterator E = V->edges.begin(); E != V->edges.end(); ++E) {
             std::cout << " ->" << E->first->data;
@@ -187,12 +189,12 @@ void graph::print () {
 
 
 
-void graph::printAsMatrix () {
+void Graph::printAsMatrix () {
     size_t size = vertexesCount();
     weight_t** matrix = newMatrix();
     
     
-    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+    for (__VertexIterator V = vertexes->begin(); V != vertexes->end(); ++V) {
         for (__EdgeIterator E = V->edges.begin(); E != V->edges.end(); ++E) {
             matrix[V->data][E->first->data] = E->second;
         }

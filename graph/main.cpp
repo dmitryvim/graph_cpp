@@ -7,14 +7,11 @@
 //
 
 #include <iostream>
-#include <vector>
+#include "graph.hpp"
 
 
 int main(int argc, const char * argv[]) {
-    std::vector< std::pair<std::vector<int>*, int> > v(10, std::make_pair(nullptr, 5));
+    graph gr(10);
     
-    
-    // insert code here...
-    std::cout << "Hello, World!\n";
     return 0;
 }
