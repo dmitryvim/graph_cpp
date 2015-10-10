@@ -7,7 +7,7 @@
 //
 
 #include "graph.hpp"
-
+#include <queue>
 
 
 void graph::newDirectedEdge (Vertex* left, Vertex* right, weight_t weight) {
@@ -67,8 +67,6 @@ graph::weight_t** graph::newMatrix () {
 
 
 
-graph::graph (bool _directed, bool _weighted): directed(_directed), weighted(_weighted) {};
-
 
 
 graph::graph (size_t size, bool _directed, bool _weighted): directed(_directed), weighted(_weighted) {
@@ -111,7 +109,7 @@ void graph::newVertex () {
 };
 
 void graph::newEdge (int left, int right, weight_t weight) {
-    newEdge(&vertexes[left], &vertexes[right]);
+    newEdge(&vertexes[left], &vertexes[right], weight);
 };
 
 void graph::deleteVertex (int index) {
@@ -213,5 +211,194 @@ void graph::printAsMatrix () {
     delete []matrix;
 };
 
+void graph::bfs_weighted (Vertex* vertex) {/*
+    typedef std::pair<Vertex*, weight_t> queuer;
+    class compare_queuer {
+    public:
+        bool operator()(const queuer &p, const queuer &q) {
+            return (p.second > q.second);
+        };
+    };
+    
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        V->color = 0;
+        V->previous = nullptr;
+    }
+    
+    std::priority_queue<queuer, std::vector<queuer>, compare_queuer> qWay;
+    int distance = 0;
+    qWay.push(std::make_pair(vertex, distance));
+    
+    
+    
+    printf("Start debug\n");
+    while (!qWay.empty()) {
+        distance = qWay.top().second;
+        vertex = qWay.top().first;
+        qWay.pop();
+        printf("pop %d distance = %d ", vertex->data, distance);
+        
+        if (!vertex->color) {
+            printf("color = %d\n", vertex->color);
+            vertex->color = 1;
+            for (__EdgeIterator E = vertex->edges.begin(); E != vertex->edges.end(); ++E) {
+                if (!E->first->color) {
+                    E->first->previous = vertex;
+                    qWay.push(std::make_pair(E->first, distance + E->second));
+                    printf("push %d distance = %d\n", E->first->data, distance + E->second);
+                }
+            }
+        }
+    }*/
+    printf("DFS FOR WEIGHTED IGNORED\n");
+};
 
+void graph::bfs_unweighted (Vertex* vertex) {
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        V->color = 0;
+        V->previous = nullptr;
+    }
+    
+    
+    std::queue<Vertex*> qWay;
+    qWay.push(vertex);
+    vertex->color = 1;
+    
+    while (!qWay.empty()) {
+        vertex = qWay.front();
+        qWay.pop();
+        
+        for (__EdgeIterator E = vertex->edges.begin(); E != vertex->edges.end(); ++E) {
+            if (!E->first->color) {
+                E->first->color = 1;
+                E->first->previous = vertex;
+                qWay.push(E->first);
+            }
+        }
+        
+    }
+}
+
+void graph::bfs (int from) {
+    if (weighted) {
+        bfs_weighted(&vertexes[from]);
+    } else {
+        bfs_unweighted(&vertexes[from]);
+    }
+};
+
+
+
+void graph::print_bfs () {
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        std::cout << V->data;
+        Vertex* prev_vertex = V->previous;
+        while (prev_vertex != nullptr) {
+            std::cout << " <- " << prev_vertex->data;
+            prev_vertex = prev_vertex->previous;
+        }
+        std::cout << std::endl;
+    }
+    
+};
+
+void graph::dfs (Vertex* vertex, int& time) {
+    vertex->color = 1;
+    vertex->time_start = ++time;
+
+    vertex->component_index = component_count;
+    
+    for (__EdgeIterator E = vertex->edges.begin(); E != vertex->edges.end(); ++E) {
+        if (E->first->color == 0) {
+            E->first->previous = vertex;
+            dfs(E->first, time);
+        }
+    };
+    
+    vertex->color = 2;
+    vertex->time_finish = ++time;
+    topologically_sorted.push_front(vertex);
+    
+};
+
+void graph::dfs () {
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        V->color = 0;
+        V->previous = nullptr;
+        V->time_start = -1;
+        V->time_finish = -1;
+        V->component_index = -1;
+    }
+    component_count = 0;
+    topologically_sorted.clear();
+    
+    int time = 0;
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        if (!V->color) {
+            dfs(&(*V), time);
+            component_count++;
+        }
+    }
+};
+
+void graph::print_dfs () {
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        std::cout << V->data << "[" << V->time_start << "; " << V->time_finish << "]";
+        if (V->previous != nullptr) {
+            std::cout << "<- " << V->previous->data;
+        }
+        std::cout << std::endl;
+    }
+    
+};
+
+void graph::print_component () {
+
+        std::cout << "count = " << component_count << std::endl;
+        for (int i = 0; i < component_count; i++) {
+            std::cout << i << " { ";
+            for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+                if (V->component_index == i) {
+                    std::cout << V->data << " ";
+                }
+            }
+            std::cout << "}\n";
+        }
+
+};
+
+void graph::print_topologically_sorted () {
+    for (__VertexPointerIterator V = topologically_sorted.begin(); V != topologically_sorted.end(); ++V) {
+        std::cout << "> " << (*V)->data << " >";
+    }
+    std::cout << std::endl;
+};
+
+void graph::strong_component () {
+    if (!directed) {
+        return;
+    }
+    graph T(vertexesCount(), true, false);
+    
+    int iter_T = 0;
+    for (__VertexPointerIterator V = topologically_sorted.begin(); V != topologically_sorted.end(); ++V, ++iter_T) {
+        T.vertexes[iter_T].data = (*V)->data;
+        (*V)->transposed = &T.vertexes[iter_T];
+        T.vertexes[iter_T].transposed = (*V);
+    }
+    
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        for (__EdgeIterator E = V->edges.begin(); E != V->edges.end(); ++E) {
+            T.newEdge(E->first->transposed, V->transposed);
+        }
+    }
+    
+
+    T.dfs();
+
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        V->component_index = V->transposed->component_index;
+    }
+    component_count = T.component_count;
+};
 

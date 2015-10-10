@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <vector>
 #include <deque>
+#include <queue>
 #include <list>
 #include <string>
 #include <fstream>
@@ -22,35 +23,49 @@
 
 
 
+
 class graph {
-    
+    typedef double weight_t;
+    typedef char color_t;
     
     
     
 private:
+    
     bool directed;
     bool weighted;
     
     struct Vertex {
         typedef std::list< std::pair<Vertex*, int> > __EdgeList;
-        
-        
         __EdgeList edges;
-        //pair <vertex to, edge weight>
+
         int data;
+        
+        
+        Vertex* previous = nullptr;
+        color_t color;
         
         Vertex (int _data):data(_data) {};
         Vertex () {};
         
+        int time_start;
+        int time_finish;
+        
+        int component_index;
+        
+        Vertex* transposed = nullptr;
     };
     
     typedef std::vector<Vertex> __VertexList;
     typedef __VertexList::iterator __VertexIterator;
+    typedef std::deque<Vertex*> __VertexPointerList;
+    typedef __VertexPointerList::iterator __VertexPointerIterator;
     typedef Vertex::__EdgeList::iterator __EdgeIterator;
-    typedef double weight_t;
-    
     
     __VertexList vertexes;
+    __VertexPointerList topologically_sorted;
+    int component_count;
+    
     
     
     void newDirectedEdge (Vertex* left, Vertex* right, weight_t weight = 1);
@@ -59,13 +74,16 @@ private:
     void deleteEdge (Vertex* left, Vertex* right);
     void deleteOutway (Vertex* vertex);
     void deleteInway (Vertex* vertex);
-    
     weight_t** newMatrix ();
+    void bfs_weighted (Vertex* vertex);
+    void bfs_unweighted (Vertex* vertex);
+    void dfs (Vertex* vertex, int &time);
+    
     
     
 public:
     
-    graph (bool _directed = false, bool _weighted = false);
+
     graph (size_t size, bool _directed = false, bool _weighted = false);
     ~graph ();
     
@@ -87,21 +105,15 @@ public:
     void print ();
     void printAsMatrix ();
     
+    void bfs (int from);
+    void print_bfs ();
     
-    //добавить ребро
-    //прочитать из файла
-    //получить из двумерной матрицы
-    
-    //вывести на экран
-    //  как списки смежности
-    //  как двумерную матрицу
-    
-    //обход в ширину
-    //обход в глубину
-    //кратчайший путь (обход в ширину)
-    //топологическая сортировка
-    //компоненты связности
-    //сильные компоненты связности
+    void dfs ();
+    void print_dfs ();
+    void print_component ();
+    void print_topologically_sorted ();
+    void strong_component ();
+
     //мосты
     //точки сочленения
     //остовные деревья
