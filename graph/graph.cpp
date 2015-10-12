@@ -303,17 +303,44 @@ void graph::print_bfs () {
 };
 
 void graph::dfs (Vertex* vertex, int& time) {
+    int children_count = 0;
+    
     vertex->color = 1;
     vertex->time_start = ++time;
+    vertex->time_up = time;
 
     vertex->component_index = component_count;
     
     for (__EdgeIterator E = vertex->edges.begin(); E != vertex->edges.end(); ++E) {
-        if (E->first->color == 0) {
-            E->first->previous = vertex;
-            dfs(E->first, time);
+
+        
+        if (E->first != vertex->previous) {
+            if (E->first->color == 1) {
+                vertex->time_up = std::min(vertex->time_up, E->first->time_up);
+            }
+            if (E->first->color == 0) {
+                E->first->previous = vertex;
+                dfs(E->first, time);
+                vertex->time_up = std::min(vertex->time_up, E->first->time_up);
+
+                if (E->first->time_up > vertex->time_start) {
+                    bridges.insert(Edge(E->first, vertex, E->second));
+                }
+                
+                if (E->first->time_up >= vertex->time_start && vertex->previous != nullptr) {
+                    cut_points.insert(vertex);
+                }
+                
+                
+                children_count++;
+            }
+            
         }
-    };
+    }
+    
+    if (vertex->previous == nullptr && children_count > 1)
+        cut_points.insert(vertex);
+    
     
     vertex->color = 2;
     vertex->time_finish = ++time;
@@ -327,10 +354,13 @@ void graph::dfs () {
         V->previous = nullptr;
         V->time_start = -1;
         V->time_finish = -1;
+        V->time_up = -1;
         V->component_index = -1;
     }
     component_count = 0;
     topologically_sorted.clear();
+    bridges.clear();
+    cut_points.clear();
     
     int time = 0;
     for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
@@ -343,7 +373,7 @@ void graph::dfs () {
 
 void graph::print_dfs () {
     for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
-        std::cout << V->data << "[" << V->time_start << "; " << V->time_finish << "]";
+        std::cout << V->data << "[" << V->time_start << "; " << V->time_finish << "] (" << V->time_up << ") ";
         if (V->previous != nullptr) {
             std::cout << "<- " << V->previous->data;
         }
@@ -402,3 +432,122 @@ void graph::strong_component () {
     component_count = T.component_count;
 };
 
+void graph::print_bridges () {
+    for (__EdgeSetIterator B = bridges.begin(); B != bridges.end(); ++B) {
+        std::cout << B->left->data << " <=> " << B->right->data << std::endl;
+    }
+};
+
+void graph::print_cutpoints() {
+    for (__VertexPointerSetInterator C = cut_points.begin(); C != cut_points.end(); ++C) {
+        std::cout << (*C)->data << std::endl;
+    }
+};
+
+void graph::ostov_prima () {
+    ostov.clear();
+
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        V->color = 0;
+    }
+    
+    
+
+    __EdgeSet Q;
+    Q.insert(Edge(nullptr, &*vertexes.begin(), 0));
+    
+    
+    size_t ostov_out = vertexesCount();
+    while(ostov_out && !Q.empty()) {
+        Edge edge = *Q.begin();
+        Q.erase(Q.begin());
+        
+        
+        
+        if (!edge.right->color) {
+            edge.right->color = 1;
+            if (edge.left != nullptr) {
+                ostov.insert(edge);
+            }
+            
+            for (__EdgeIterator E = edge.right->edges.begin(); E != edge.right->edges.end(); ++E) {
+                if (!E->first->color) {
+                    Q.insert(Edge(edge.right, E->first, E->second));
+                }
+            }
+            ostov_out--;
+        }
+        
+    }
+    
+};
+
+
+
+void graph::ostov_kruskal () {
+        
+    ostov.clear();
+    __EdgeSet Q;
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        V->previous = nullptr;
+        for (__EdgeIterator E = V->edges.begin(); E != V->edges.end(); ++E) {
+            Q.insert(Edge(&*V, E->first, E->second));
+        }
+    }
+    
+    size_t n = vertexesCount() - 1;
+    while (n) {
+        Edge E = *Q.begin();
+        Q.erase(Q.begin());
+        
+        if (E.left->find_set() != E.right->find_set()) {
+            E.left->union_set(E.right);
+            ostov.insert(E);
+            n--;
+        }
+
+    }
+    
+    
+};
+
+void graph::print_ostov () {
+    for (__EdgeSetIterator E = ostov.begin(); E != ostov.end(); ++E) {
+        std::cout << E->left->data << " <=> " << E->right->data << std::endl;
+    }
+};
+
+void graph::dijkstra (int from) {
+    dijkstra(&vertexes[from]);
+};
+
+void graph::dijkstra (Vertex* vertex) {
+    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
+        V->previous = nullptr;
+        V->color = 0;
+    }
+
+    __EdgeSet Q;
+    Q.insert(Edge(nullptr, vertex, 0));
+    
+    
+    
+    while(!Q.empty()) {
+        Edge edge = *Q.begin();
+        Q.erase(Q.begin());
+        
+        
+        if (!edge.right->color) {
+            edge.right->color = 1;
+            edge.right->previous = edge.left;
+            
+            for (__EdgeIterator E = edge.right->edges.begin(); E != edge.right->edges.end(); ++E) {
+                if (!E->first->color) {
+                    Q.insert(Edge(edge.right, E->first, edge.weight + E->second));
+                }
+            }
+        }
+        
+    }
+
+};

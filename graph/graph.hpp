@@ -17,6 +17,8 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <set>
+#include <map>
 
 
 
@@ -25,7 +27,7 @@
 
 
 class graph {
-    typedef double weight_t;
+    typedef float weight_t;
     typedef char color_t;
     
     
@@ -36,7 +38,8 @@ private:
     bool weighted;
     
     struct Vertex {
-        typedef std::list< std::pair<Vertex*, int> > __EdgeList;
+        typedef std::pair<Vertex*, weight_t> __Edge;
+        typedef std::list<__Edge> __EdgeList;
         __EdgeList edges;
 
         int data;
@@ -50,22 +53,56 @@ private:
         
         int time_start;
         int time_finish;
+        int time_up;
         
         int component_index;
         
         Vertex* transposed = nullptr;
+        
+        Vertex* find_set () {
+            if (previous == nullptr || previous == this) {
+                return this;
+            } else {
+                return this->previous = previous->find_set();
+            }
+        };
+        
+        void union_set (Vertex* par) {
+            this->find_set()->previous = par->find_set();
+        };
     };
+    
+    struct Edge {
+        Vertex* left;
+        Vertex* right;
+        weight_t weight;
+        
+        Edge (Vertex* _left, Vertex* _right, weight_t _weight): left(_left), right(_right), weight(_weight) {};
+        
+        bool operator < (const Edge& E) const {
+            return (this->weight < E.weight) || ((this->weight == E.weight) && !(this->left == E.left && this->right == E.right) && !(this->right == E.left && this->left == E.right));
+        };
+    };
+    
+
     
     typedef std::vector<Vertex> __VertexList;
     typedef __VertexList::iterator __VertexIterator;
     typedef std::deque<Vertex*> __VertexPointerList;
     typedef __VertexPointerList::iterator __VertexPointerIterator;
     typedef Vertex::__EdgeList::iterator __EdgeIterator;
+    typedef std::set<Edge> __EdgeSet;
+    typedef __EdgeSet::iterator __EdgeSetIterator;
+    typedef std::set<Vertex*> __VertexPointerSet;
+    typedef __VertexPointerSet::iterator __VertexPointerSetInterator;
+
     
     __VertexList vertexes;
     __VertexPointerList topologically_sorted;
     int component_count;
-    
+    __EdgeSet bridges;
+    __VertexPointerSet cut_points;
+    __EdgeSet ostov;
     
     
     void newDirectedEdge (Vertex* left, Vertex* right, weight_t weight = 1);
@@ -78,6 +115,7 @@ private:
     void bfs_weighted (Vertex* vertex);
     void bfs_unweighted (Vertex* vertex);
     void dfs (Vertex* vertex, int &time);
+    void dijkstra(Vertex* vertex);
     
     
     
@@ -114,9 +152,16 @@ public:
     void print_topologically_sorted ();
     void strong_component ();
 
-    //мосты
-    //точки сочленения
-    //остовные деревья
+    void print_bridges ();
+    void print_cutpoints ();
+    
+    void ostov_prima ();
+    void ostov_kruskal ();
+    void print_ostov ();
+    
+    void dijkstra (int from);
+
+    //дейкстра
     
     
     
