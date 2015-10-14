@@ -211,49 +211,9 @@ void graph::printAsMatrix () {
     delete []matrix;
 };
 
-void graph::bfs_weighted (Vertex* vertex) {/*
-    typedef std::pair<Vertex*, weight_t> queuer;
-    class compare_queuer {
-    public:
-        bool operator()(const queuer &p, const queuer &q) {
-            return (p.second > q.second);
-        };
-    };
-    
-    for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
-        V->color = 0;
-        V->previous = nullptr;
-    }
-    
-    std::priority_queue<queuer, std::vector<queuer>, compare_queuer> qWay;
-    int distance = 0;
-    qWay.push(std::make_pair(vertex, distance));
-    
-    
-    
-    printf("Start debug\n");
-    while (!qWay.empty()) {
-        distance = qWay.top().second;
-        vertex = qWay.top().first;
-        qWay.pop();
-        printf("pop %d distance = %d ", vertex->data, distance);
-        
-        if (!vertex->color) {
-            printf("color = %d\n", vertex->color);
-            vertex->color = 1;
-            for (__EdgeIterator E = vertex->edges.begin(); E != vertex->edges.end(); ++E) {
-                if (!E->first->color) {
-                    E->first->previous = vertex;
-                    qWay.push(std::make_pair(E->first, distance + E->second));
-                    printf("push %d distance = %d\n", E->first->data, distance + E->second);
-                }
-            }
-        }
-    }*/
-    printf("DFS FOR WEIGHTED IGNORED\n");
-};
 
-void graph::bfs_unweighted (Vertex* vertex) {
+
+void graph::bfs (Vertex* vertex) {
     for (__VertexIterator V = vertexes.begin(); V != vertexes.end(); ++V) {
         V->color = 0;
         V->previous = nullptr;
@@ -280,11 +240,7 @@ void graph::bfs_unweighted (Vertex* vertex) {
 }
 
 void graph::bfs (int from) {
-    if (weighted) {
-        bfs_weighted(&vertexes[from]);
-    } else {
-        bfs_unweighted(&vertexes[from]);
-    }
+    bfs(&vertexes[from]);
 };
 
 
@@ -550,4 +506,71 @@ void graph::dijkstra (Vertex* vertex) {
         
     }
 
+};
+
+void graph::print_allway (int from, int to) {
+    print_allway(&vertexes[from], &vertexes[to]);
+};
+
+bool graph::isVertexInVertexDeque (const Vertex* vertex, __VertexPointerList* deq) {
+    for (__VertexPointerIterator V = deq->begin(); V != deq->end(); ++V) {
+        if (vertex == *V) {
+            return true;
+        }
+    }
+    return false;
+};
+
+void graph::print_VectorPointerList (__VertexPointerList* deq) {
+    for (__VertexPointerIterator V = deq->begin(); V != deq->end(); ++V) {
+        std::cout << "> " << (*V)->data << " >";
+    }
+    std::cout << std::endl;
+};
+
+void graph::print_allway (Vertex* from, Vertex* to) {
+    std::set< __VertexPointerList* > waySet;
+    
+    typedef std::deque < __VertexPointerList*> __VertexPointerListDeque;
+    __VertexPointerListDeque ways;
+    
+    __VertexPointerList *vpl = new __VertexPointerList;
+    vpl->push_back(from);
+    ways.push_back(vpl);
+        
+    while (!ways.empty()) {
+        vpl = ways.front();
+        ways.pop_front();
+        printf("way:\n");
+        print_VectorPointerList(vpl);
+        
+        for (__EdgeIterator E = vpl->back()->edges.begin(); E != vpl->back()->edges.end(); ++E) {
+            printf("try %d\n", E->first->data);
+            if (!isVertexInVertexDeque(E->first, vpl)) {
+                __VertexPointerList* vpl2 = new __VertexPointerList(*vpl);
+                vpl2->push_back(E->first);
+                printf("added:\n");
+                print_VectorPointerList(vpl2);
+                if (E->first == to) {
+                    waySet.insert(vpl2);
+                } else {
+                    ways.push_back(vpl2);
+                }
+                
+            }
+        }
+        delete vpl;
+        
+    }
+    
+    for (std::set < __VertexPointerList* >::iterator iter = waySet.begin(); iter != waySet.end(); ++iter) {
+        print_VectorPointerList(*iter);
+        delete (*iter);
+    }
+    
+    
+    
+    
+    
+    
 };

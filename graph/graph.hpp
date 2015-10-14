@@ -95,6 +95,7 @@ private:
     typedef __EdgeSet::iterator __EdgeSetIterator;
     typedef std::set<Vertex*> __VertexPointerSet;
     typedef __VertexPointerSet::iterator __VertexPointerSetInterator;
+    
 
     
     __VertexList vertexes;
@@ -112,11 +113,13 @@ private:
     void deleteOutway (Vertex* vertex);
     void deleteInway (Vertex* vertex);
     weight_t** newMatrix ();
-    void bfs_weighted (Vertex* vertex);
-    void bfs_unweighted (Vertex* vertex);
+    void bfs(Vertex* vertex);
     void dfs (Vertex* vertex, int &time);
     void dijkstra(Vertex* vertex);
     
+    bool isVertexInVertexDeque (const Vertex* vertex, __VertexPointerList* deq);
+    void print_VectorPointerList (__VertexPointerList* deq);
+    void print_allway (Vertex* from, Vertex* to);
     
     
 public:
@@ -160,6 +163,8 @@ public:
     void print_ostov ();
     
     void dijkstra (int from);
+    
+    void print_allway (int from, int to);
 
     //дейкстра
     

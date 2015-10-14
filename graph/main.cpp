@@ -80,8 +80,9 @@ int main(int argc, const char * argv[]) {
     
     
     gr.print();
-    gr.dijkstra(4);
-    gr.print_bfs();
+    //gr.dijkstra(4);
+    //gr.print_bfs();
+    gr.print_allway(4, 1);
     
     
     return 0;
